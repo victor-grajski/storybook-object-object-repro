@@ -8,15 +8,37 @@ module.exports = {
     "@storybook/addon-essentials",
     "@storybook/preset-create-react-app"
   ],
-  "webpackFinal": (config) => {
-      const path = require('path');
-      // add monorepo root as a valid directory to import modules from
-      config.resolve.plugins.forEach((p) => {
-        if (Array.isArray(p.appSrcs)) {
-          p.appSrcs.push(path.join(__dirname, '..', '..', '..', 'storybook'));
-        }
+  typescript: {
+    check: true,
+    checkOptions: {},
+    reactDocgen: "react-docgen-typescript",
+    reactDocgenTypescriptOptions: {
+      shouldExtractLiteralValuesFromEnum: true,
+      shouldRemoveUndefinedFromOptional: true,
+      propFilter: (prop) =>
+        prop.parent
+          ? /@mui/.test(prop.parent.fileName) || !/node_modules/.test(prop.parent.fileName)
+          : true,
+    },
+    webpackFinal: async (config) => {
+      config.module.rules.push({
+        test: /\.mdx$/,
+        use: 'raw-loader',
       });
-      return config;
-    }
+
+      return {
+        ...config,
+        resolve: {
+          ...config.resolve,
+          extensions: [".mdx"],
+          alias: {
+            ...config.resolve.alias,
+            '@emotion/core': toPath('node_modules/@emotion/react'),
+            'emotion-theming': toPath('node_modules/@emotion/react'),
+          },
+        },
+      };
+    },
+  }
     
 }
